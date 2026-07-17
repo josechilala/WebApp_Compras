@@ -62,4 +62,48 @@ public class AuthService : IAuthService
             Message = "Usuário cadastrado com sucesso."
         };
     }
+
+    public async Task<LoginResponse> LoginAsync(
+        LoginRequest request)
+    {
+        string normalizedEmail = request.Email
+            .Trim()
+            .ToLower();
+
+        User? user = await _userRepository
+            .GetByEmailAsync(normalizedEmail);
+
+        if (user is null)
+        {
+            throw new UnauthorizedAccessException(
+                "E-mail ou senha inválidos.");
+        }
+
+        if (!user.IsActive)
+        {
+            throw new UnauthorizedAccessException(
+                "Este usuário está inativo.");
+        }
+
+        PasswordVerificationResult passwordResult =
+            _passwordHasher.VerifyHashedPassword(
+                user,
+                user.PasswordHash,
+                request.Password);
+
+        if (passwordResult == PasswordVerificationResult.Failed)
+        {
+            throw new UnauthorizedAccessException(
+                "E-mail ou senha inválidos.");
+        }
+
+        return new LoginResponse
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email,
+            Role = user.Role.ToString(),
+            Message = "Login realizado com sucesso."
+        };
+    }
 }

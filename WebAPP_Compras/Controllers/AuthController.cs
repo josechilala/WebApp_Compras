@@ -15,36 +15,63 @@ public class AuthController : ControllerBase
         _authService = authService;
     }
 
-    /// <summary>
-    /// Cadastro de usuário
-    /// </summary>
     [HttpPost("register")]
     public async Task<IActionResult> Register(
         [FromBody] RegisterRequest request)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
         try
         {
             RegisterResponse response =
                 await _authService.RegisterAsync(request);
 
-            return Created("", response);
+            return StatusCode(
+                StatusCodes.Status201Created,
+                response);
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException exception)
         {
             return Conflict(new
             {
-                message = ex.Message
+                message = exception.Message
             });
         }
-        catch (Exception)
+        catch
         {
-            return StatusCode(500, new
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new
+                {
+                    message = "Ocorreu um erro ao cadastrar o usuário."
+                });
+        }
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login(
+        [FromBody] LoginRequest request)
+    {
+        try
+        {
+            LoginResponse response =
+                await _authService.LoginAsync(request);
+
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            return Unauthorized(new
             {
-                message = "Erro interno do servidor."
+                message = exception.Message
             });
+        }
+        catch
+        {
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new
+                {
+                    message = "Ocorreu um erro ao realizar o login."
+                });
         }
     }
 }

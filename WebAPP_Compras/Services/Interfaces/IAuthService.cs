@@ -4,5 +4,9 @@ namespace WebAPP_Compras.Services.Interfaces;
 
 public interface IAuthService
 {
-    Task<RegisterResponse> RegisterAsync(RegisterRequest request);
+    Task<RegisterResponse> RegisterAsync(
+        RegisterRequest request);
+
+    Task<LoginResponse> LoginAsync(
+        LoginRequest request);
 }
