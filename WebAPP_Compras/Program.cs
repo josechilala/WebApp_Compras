@@ -25,7 +25,9 @@ string connectionString =
         "A ConnectionString 'DefaultConnection' não foi configurada.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+{
+    options.UseSqlServer(connectionString);
+});
 
 //
 // CONFIGURAÇÕES JWT
@@ -82,6 +84,8 @@ builder.Services
     {
         options.RequireHttpsMetadata = true;
         options.SaveToken = false;
+        options.IncludeErrorDetails =
+            builder.Environment.IsDevelopment();
 
         options.TokenValidationParameters =
             new TokenValidationParameters
@@ -98,12 +102,43 @@ builder.Services
                         Encoding.UTF8.GetBytes(jwtSettings.Key)),
 
                 ValidateLifetime = true,
+                RequireExpirationTime = true,
+                RequireSignedTokens = true,
 
                 ClockSkew = TimeSpan.Zero,
 
                 NameClaimType = ClaimTypes.Name,
                 RoleClaimType = ClaimTypes.Role
             };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                if (builder.Environment.IsDevelopment())
+                {
+                    Console.WriteLine(
+                        $"Falha JWT: " +
+                        $"{context.Exception.GetType().Name}");
+
+                    Console.WriteLine(
+                        context.Exception.Message);
+                }
+
+                return Task.CompletedTask;
+            },
+
+            OnTokenValidated = context =>
+            {
+                if (builder.Environment.IsDevelopment())
+                {
+                    Console.WriteLine(
+                        "Token JWT validado com sucesso.");
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddAuthorization();
@@ -144,7 +179,8 @@ builder.Services.AddSwaggerGen(options =>
             BearerFormat = "JWT",
             In = ParameterLocation.Header,
             Description =
-                "Informe apenas o token JWT retornado pelo login."
+                "Cole somente o token JWT retornado pelo login. " +
+                "Não informe a palavra Bearer."
         });
 
     options.AddSecurityRequirement(document =>
@@ -163,12 +199,16 @@ builder.Services.AddSwaggerGen(options =>
 //
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IStoreRepository, StoreRepository>();
+
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IStoreService, StoreService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+
 builder.Services.AddScoped<PasswordHasher<User>>();
 
 //
-// CRIAÇÃO DA APLICAÇÃO
+// CONSTRUÇÃO DA APLICAÇÃO
 //
 
 var app = builder.Build();
@@ -186,6 +226,9 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint(
             "/swagger/v1/swagger.json",
             "WebAPP Compras API v1");
+
+        options.DisplayRequestDuration();
+        options.EnableTryItOutByDefault();
     });
 }
 else
