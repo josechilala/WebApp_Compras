@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using WebAPP_Compras.Models.DTOs.Auth;
 using WebAPP_Compras.Services.Interfaces;
 
@@ -15,6 +17,7 @@ public class AuthController : ControllerBase
         _authService = authService;
     }
 
+    [AllowAnonymous]
     [HttpPost("register")]
     public async Task<IActionResult> Register(
         [FromBody] RegisterRequest request)
@@ -46,6 +49,7 @@ public class AuthController : ControllerBase
         }
     }
 
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login(
         [FromBody] LoginRequest request)
@@ -73,5 +77,30 @@ public class AuthController : ControllerBase
                     message = "Ocorreu um erro ao realizar o login."
                 });
         }
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult GetCurrentUser()
+    {
+        string? userId = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
+
+        string? name = User.FindFirstValue(
+            ClaimTypes.Name);
+
+        string? email = User.FindFirstValue(
+            ClaimTypes.Email);
+
+        string? role = User.FindFirstValue(
+            ClaimTypes.Role);
+
+        return Ok(new
+        {
+            id = userId,
+            name,
+            email,
+            role
+        });
     }
 }

@@ -11,13 +11,16 @@ public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
     private readonly PasswordHasher<User> _passwordHasher;
+    private readonly IJwtService _jwtService;
 
     public AuthService(
         IUserRepository userRepository,
-        PasswordHasher<User> passwordHasher)
+        PasswordHasher<User> passwordHasher,
+        IJwtService jwtService)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
+        _jwtService = jwtService;
     }
 
     public async Task<RegisterResponse> RegisterAsync(
@@ -25,7 +28,7 @@ public class AuthService : IAuthService
     {
         string normalizedEmail = request.Email
             .Trim()
-            .ToLower();
+            .ToLowerInvariant();
 
         bool emailAlreadyExists =
             await _userRepository.EmailExistsAsync(normalizedEmail);
@@ -68,7 +71,7 @@ public class AuthService : IAuthService
     {
         string normalizedEmail = request.Email
             .Trim()
-            .ToLower();
+            .ToLowerInvariant();
 
         User? user = await _userRepository
             .GetByEmailAsync(normalizedEmail);
@@ -97,12 +100,17 @@ public class AuthService : IAuthService
                 "E-mail ou senha inválidos.");
         }
 
+        string token = _jwtService.GenerateToken(user);
+        DateTime expiresAt = _jwtService.GetExpiration();
+
         return new LoginResponse
         {
             Id = user.Id,
             Name = user.Name,
             Email = user.Email,
             Role = user.Role.ToString(),
+            Token = token,
+            ExpiresAt = expiresAt,
             Message = "Login realizado com sucesso."
         };
     }
