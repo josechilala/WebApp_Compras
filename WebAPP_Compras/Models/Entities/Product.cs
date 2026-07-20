@@ -4,13 +4,16 @@ using WebAPP_Compras.Models.Common;
 
 namespace WebAPP_Compras.Models.Entities;
 
-public class Product : BaseEntity
+public sealed class Product : BaseEntity
 {
     public int StoreId { get; set; }
 
     [Required]
     [MaxLength(150)]
     public string Name { get; set; } = string.Empty;
+
+    [MaxLength(500)]
+    public string? Description { get; set; }
 
     [Column(TypeName = "decimal(18,2)")]
     public decimal Price { get; set; }
@@ -22,5 +25,6 @@ public class Product : BaseEntity
 
     public Store Store { get; set; } = null!;
 
-    public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    public ICollection<OrderItem> OrderItems { get; set; } =
+        new List<OrderItem>();
 }
