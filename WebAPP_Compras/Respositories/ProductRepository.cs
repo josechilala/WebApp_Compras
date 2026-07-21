@@ -42,7 +42,7 @@ public sealed class ProductRepository : IProductRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<Product?> GetByIdAsync(
+    public Task<Product?> GetByIdAsync(
         int id,
         bool includeInactive = false,
         CancellationToken cancellationToken = default)
@@ -59,12 +59,12 @@ public sealed class ProductRepository : IProductRepository
                     product.Store.IsActive);
         }
 
-        return await query.FirstOrDefaultAsync(
+        return query.FirstOrDefaultAsync(
             product => product.Id == id,
             cancellationToken);
     }
 
-    public async Task<Product?> GetTrackedByIdAsync(
+    public Task<Product?> GetTrackedByIdAsync(
         int id,
         bool includeInactive = false,
         CancellationToken cancellationToken = default)
@@ -74,15 +74,37 @@ public sealed class ProductRepository : IProductRepository
 
         if (!includeInactive)
         {
-            query = query.Where(product => product.IsActive);
+            query = query.Where(
+                product =>
+                    product.IsActive &&
+                    product.Store.IsActive);
         }
 
-        return await query.FirstOrDefaultAsync(
+        return query.FirstOrDefaultAsync(
             product => product.Id == id,
             cancellationToken);
     }
 
-    public async Task<bool> NameExistsInStoreAsync(
+    public async Task<IReadOnlyCollection<Product>>
+        GetAvailableByIdsAsync(
+            IReadOnlyCollection<int> productIds,
+            int storeId,
+            CancellationToken cancellationToken = default)
+    {
+        return await _context.Products
+            .AsNoTracking()
+            .Include(product => product.Store)
+            .Where(
+                product =>
+                    productIds.Contains(product.Id) &&
+                    product.StoreId == storeId &&
+                    product.IsActive &&
+                    product.IsAvailable &&
+                    product.Store.IsActive)
+            .ToListAsync(cancellationToken);
+    }
+
+    public Task<bool> NameExistsInStoreAsync(
         int storeId,
         string name,
         int? ignoredProductId = null,
@@ -90,9 +112,9 @@ public sealed class ProductRepository : IProductRepository
     {
         string normalizedName = name
             .Trim()
-            .ToLowerInvariant();
+            .ToLower();
 
-        return await _context.Products.AnyAsync(
+        return _context.Products.AnyAsync(
             product =>
                 product.StoreId == storeId &&
                 product.Name.ToLower() == normalizedName &&

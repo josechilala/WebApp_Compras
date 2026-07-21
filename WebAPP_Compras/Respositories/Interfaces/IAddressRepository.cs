@@ -2,39 +2,35 @@
 
 namespace WebAPP_Compras.Repositories.Interfaces;
 
-public interface IProductRepository
+public interface IAddressRepository
 {
-    Task<IReadOnlyCollection<Product>> GetAllAsync(
-        int? storeId,
+    Task<IReadOnlyCollection<Address>> GetAllByUserAsync(
+        int userId,
         bool includeInactive,
         CancellationToken cancellationToken = default);
 
-    Task<Product?> GetByIdAsync(
-        int id,
+    Task<Address?> GetByIdForUserAsync(
+        int addressId,
+        int userId,
         bool includeInactive = false,
         CancellationToken cancellationToken = default);
 
-    Task<Product?> GetTrackedByIdAsync(
-        int id,
+    Task<Address?> GetTrackedByIdForUserAsync(
+        int addressId,
+        int userId,
         bool includeInactive = false,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyCollection<Product>> GetAvailableByIdsAsync(
-        IReadOnlyCollection<int> productIds,
-        int storeId,
-        CancellationToken cancellationToken = default);
-
-    Task<bool> NameExistsInStoreAsync(
-        int storeId,
-        string name,
-        int? ignoredProductId = null,
+    Task<Address?> GetActiveByIdForUserAsync(
+        int addressId,
+        int userId,
         CancellationToken cancellationToken = default);
 
     Task AddAsync(
-        Product product,
+        Address address,
         CancellationToken cancellationToken = default);
 
-    void Update(Product product);
+    void Update(Address address);
 
     Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default);

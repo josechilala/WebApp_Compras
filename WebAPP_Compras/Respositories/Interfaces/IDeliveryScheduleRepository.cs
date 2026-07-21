@@ -2,39 +2,39 @@
 
 namespace WebAPP_Compras.Repositories.Interfaces;
 
-public interface IProductRepository
+public interface IDeliveryScheduleRepository
 {
-    Task<IReadOnlyCollection<Product>> GetAllAsync(
-        int? storeId,
+    Task<IReadOnlyCollection<DeliverySchedule>> GetAllAsync(
         bool includeInactive,
+        bool onlyFuture,
         CancellationToken cancellationToken = default);
 
-    Task<Product?> GetByIdAsync(
+    Task<DeliverySchedule?> GetByIdAsync(
         int id,
         bool includeInactive = false,
         CancellationToken cancellationToken = default);
 
-    Task<Product?> GetTrackedByIdAsync(
+    Task<DeliverySchedule?> GetTrackedByIdAsync(
         int id,
         bool includeInactive = false,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyCollection<Product>> GetAvailableByIdsAsync(
-        IReadOnlyCollection<int> productIds,
-        int storeId,
+    Task<DeliverySchedule?> GetAvailableTrackedByIdAsync(
+        int id,
         CancellationToken cancellationToken = default);
 
-    Task<bool> NameExistsInStoreAsync(
-        int storeId,
-        string name,
-        int? ignoredProductId = null,
+    Task<bool> HasOverlappingScheduleAsync(
+        DateTime deliveryDate,
+        TimeSpan startTime,
+        TimeSpan endTime,
+        int? ignoredScheduleId = null,
         CancellationToken cancellationToken = default);
 
     Task AddAsync(
-        Product product,
+        DeliverySchedule deliverySchedule,
         CancellationToken cancellationToken = default);
 
-    void Update(Product product);
+    void Update(DeliverySchedule deliverySchedule);
 
     Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default);
